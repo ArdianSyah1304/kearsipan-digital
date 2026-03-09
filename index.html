@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArsipKu Premium - Ardiansyah System</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2563eb; --accent: #3b82f6; --success: #10b981;
+            --danger: #ef4444; --warning: #f59e0b; --dark: #0f172a;
+            --light: #ffffff; --bg: #f8fafc; --gray: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); color: var(--dark); overflow-x: hidden; }
+
+        .btn-main { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid var(--gray); border-radius: 12px; margin-bottom: 1rem; outline: none; }
+        .card { background: white; padding: 1.2rem; border-radius: 20px; border: 1px solid var(--gray); margin-bottom: 1rem; }
+
+        /* Login Page */
+        #login-page { height: 100vh; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at top right, #1e40af, #0f172a); padding: 20px; }
+        .login-card { background: white; padding: 2.5rem; border-radius: 30px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+        /* Sidebar & Navigation */
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; transition: 0.4s; padding: 2rem 1.5rem; display: flex; flex-direction: column; border-right: 1px solid var(--gray); }
+        .sidebar.active { left: 0; }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 1999; backdrop-filter: blur(4px); }
+        .sidebar-overlay.active { display: block; }
+        
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; color: #64748b; text-decoration: none; border-radius: 12px; margin-bottom: 8px; font-weight: 600; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: #eff6ff; color: var(--primary); }
+        .nav-item.logout { margin-top: auto; color: var(--danger); background: #fff1f2; }
+
+        .mobile-header { position: sticky; top: 0; background: white; padding: 15px 20px; border-bottom: 1px solid var(--gray); display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
+
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 20px; }
+        .doc-item { background: white; padding: 15px; border-radius: 18px; text-align: center; border: 1px solid var(--gray); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
+        .custom-modal { background: white; padding: 2rem; border-radius: 24px; width: 90%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+<div id="modal-box" class="modal-overlay">
+    <div class="custom-modal" id="modal-inner"></div>
+</div>
+
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<section id="login-page">
+    <div class="login-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="background: var(--primary); width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white;">
+                <i data-lucide="archive" size="32"></i>
+            </div>
+            <h2 style="font-weight: 800;">ArsipKu</h2>
+            <p style="color: #64748b; font-size: 0.8rem;">By Ardiansyah System</p>
+        </div>
+        <input type="text" id="log-u" class="form-control" placeholder="Username / Nama">
+        <input type="password" id="log-p" class="form-control" placeholder="Password / No. HP">
+        <button class="btn-main" onclick="handleLogin()">Masuk ke Sistem</button>
+    </div>
+</section>
+
+<section id="admin-view" style="display:none">
+    <header class="mobile-header">
+        <button onclick="toggleSidebar()" style="background:none; border:none; cursor:pointer;"><i data-lucide="menu"></i></button>
+        <strong style="font-weight: 800;">ADMIN PANEL</strong>
+        <div style="width:24px;"></div>
+    </header>
+
+    <aside class="sidebar" id="sidebar-admin">
+        <h2 style="font-weight: 800; color: var(--primary); margin-bottom: 2rem;">ArsipKu</h2>
+        <nav style="display:flex; flex-direction:column; height: 100%;">
+            <div class="nav-item active" onclick="navTo('adm-home', this)"><i data-lucide="layout-dashboard"></i> Dashboard</div>
+            <div class="nav-item" onclick="navTo('adm-arsip', this)"><i data-lucide="file-plus"></i> Kelola Arsip</div>
+            <div class="nav-item" onclick="navTo('adm-petugas', this)"><i data-lucide="users"></i> Data Petugas</div>
+            <div class="nav-item" onclick="navTo('adm-pesan', this)"><i data-lucide="mail"></i> Pesan Bantuan</div>
+            <div class="nav-item" onclick="navTo('adm-setting', this)"><i data-lucide="settings"></i> Pengaturan</div>
+            <div class="nav-item logout" onclick="location.reload()"><i data-lucide="log-out"></i> Keluar</div>
+        </nav>
+    </aside>
+
+    <main style="padding: 20px;">
+        <div id="adm-home" class="sec">
+            <div class="card" style="background: var(--primary); color: white; border: none;">
+                <p>Bagikan ke User:</p>
+                <button onclick="copyUserLink()" style="background:white; color:var(--primary); border:none; padding:8px 15px; border-radius:10px; margin-top:10px; font-weight:800; cursor:pointer;">
+                    <i data-lucide="copy" size="14"></i> Salin Link Dashboard User
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div class="card">
+                    <small>Total Arsip</small>
+                    <h2 id="st-a">0</h2>
+                </div>
+                <div class="card">
+                    <small>Pesan Baru</small>
+                    <h2 id="st-p">0</h2>
+                </div>
+            </div>
+            <div class="card"><canvas id="myChart" style="max-height:180px;"></canvas></div>
+        </div>
+
+        <div id="adm-arsip" class="sec" style="display:none">
+            <button onclick="modalArsip()" class="btn-main" style="margin-bottom:15px;">+ Tambah Arsip Baru</button>
+            <div id="admin-arsip-list"></div>
+        </div>
+
+        <div id="adm-petugas" class="sec" style="display:none">
+            <h3 style="margin-bottom:15px;">Daftar Petugas</h3>
+            <div id="list-petugas"></div>
+        </div>
+
+        <div id="adm-pesan" class="sec" style="display:none">
+            <h3 style="margin-bottom:15px;">Pesan Bantuan</h3>
+            <div id="list-pesan"></div>
+        </div>
+
+        <div id="adm-setting" class="sec" style="display:none">
+            <div class="card">
+                <button class="btn-main" onclick="backupData()" style="background:#f1f5f9; color:var(--dark); margin-bottom:10px;">Backup Data (JSON)</button>
+                <button class="btn-main" onclick="resetData()" style="background:var(--danger);">Reset Semua Data</button>
+            </div>
+        </div>
+    </main>
+</section>
+
+<section id="user-view" style="display:none">
+    <header class="mobile-header">
+        <button onclick="toggleSidebarUser()" style="background:none; border:none; cursor:pointer;"><i data-lucide="menu"></i></button>
+        <strong style="font-weight: 800; color: var(--primary);">ARSIPKU USER</strong>
+        <div style="width:24px;"></div>
+    </header>
+
+    <aside class="sidebar" id="sidebar-user">
+        <h2 style="font-weight: 800; color: var(--primary); margin-bottom: 2rem;">ArsipKu</h2>
+        <nav style="display:flex; flex-direction:column; height: 100%;">
+            <div class="nav-item active"><i data-lucide="home"></i> Dashboard</div>
+            <div class="nav-item logout" onclick="location.reload()"><i data-lucide="log-out"></i> Keluar</div>
+        </nav>
+    </aside>
+
+    <main style="padding: 20px;">
+        <h3 id="greet-usr">Selamat Datang</h3>
+        <p style="color:#64748b; font-size:0.8rem; margin-bottom:20px;">Silahkan unduh dokumen yang tersedia.</p>
+        <div id="user-grid" class="user-grid"></div>
+        
+        <div class="card" style="margin-top:30px; border-style:dashed;">
+            <h4 style="margin-bottom:10px;">Pusat Bantuan</h4>
+            <textarea id="msg-input" class="form-control" rows="3" placeholder="Apa kendala Anda?"></textarea>
+            <button class="btn-main" onclick="sendPesan()">Kirim Pesan</button>
+        </div>
+    </main>
+</section>
+
+<script>
+    const listAdmin = ['ardiansyah', 'sudarte', 'mala', 'jumadil'];
+    let db_arsip = JSON.parse(localStorage.getItem('arsip')) || [];
+    let db_pesan = JSON.parse(localStorage.getItem('pesan')) || [];
+    let currentUser = null;
+
+    // OTOMATIS CEK LINK SAAT DIBUKA
+    window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('view') && urlParams.get('view') === 'user') {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('user-view').style.display = 'block';
+            renderUser();
+        }
+        lucide.createIcons();
+    };
+
+    function toggleSidebar() {
+        document.getElementById('sidebar-admin').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    function toggleSidebarUser() {
+        document.getElementById('sidebar-user').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    function handleLogin() {
+        const u = document.getElementById('log-u').value.toLowerCase();
+        const p = document.getElementById('log-p').value;
+
+        if(!u || !p) return alert("Isi Nama & Password!");
+
+        document.getElementById('login-page').style.display = 'none';
+        
+        if(listAdmin.includes(u)) {
+            document.getElementById('admin-view').style.display = 'block';
+            renderAdmin();
+            initChart();
+        } else {
+            currentUser = u;
+            document.getElementById('user-view').style.display = 'block';
+            document.getElementById('greet-usr').innerText = "Halo, " + u;
+            renderUser();
+        }
+    }
+
+    function copyUserLink() {
+        // Link yang dihasilkan akan langsung mengarahkan ke Dashboard User
+        const base = window.location.href.split('?')[0];
+        const userLink = `${base}?view=user`;
+        
+        navigator.clipboard.writeText(userLink).then(() => {
+            alert("Link Dashboard User Berhasil Disalin!");
+        });
+    }
+
+    function navTo(id, el) {
+        document.querySelectorAll('.sec').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).style.display = 'block';
+        el.classList.add('active');
+        toggleSidebar();
+    }
+
+    function modalArsip(id = null) {
+        document.getElementById('modal-box').style.display = 'flex';
+        const data = id ? db_arsip.find(x => x.id == id) : { nama: '' };
+        document.getElementById('modal-inner').innerHTML = `
+            <h3 style="margin-bottom:15px;">Upload Dokumen</h3>
+            <input type="text" id="up-n" class="form-control" placeholder="Nama Dokumen" value="${data.nama}">
+            <input type="file" id="up-f" class="form-control">
+            <button class="btn-main" onclick="saveArsip(${id})">Simpan ke Server</button>
+            <button class="btn-main" style="background:#eee; color:black; margin-top:10px;" onclick="closeModal()">Batal</button>
+        `;
+    }
+
+    function saveArsip(id) {
+        const n = document.getElementById('up-n').value;
+        const f = document.getElementById('up-f').files[0];
+        if(f) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const item = { id: id || Date.now(), nama: n, raw: e.target.result, tipe: f.type.includes('pdf') ? 'PDF' : 'Gambar' };
+                if(id) db_arsip[db_arsip.findIndex(x => x.id == id)] = item;
+                else db_arsip.push(item);
+                saveDB(); renderAdmin(); closeModal();
+            };
+            reader.readAsDataURL(f);
+        } else if(id) {
+            db_arsip.find(x => x.id == id).nama = n;
+            saveDB(); renderAdmin(); closeModal();
+        }
+    }
+
+    function renderAdmin() {
+        document.getElementById('admin-arsip-list').innerHTML = db_arsip.map(a => `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>${a.nama}</strong><br><small style="color:var(--primary)">${a.tipe}</small></div>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="delArsip(${a.id})" style="border:none; background:#fee2e2; color:var(--danger); padding:8px; border-radius:8px;"><i data-lucide="trash" size="16"></i></button>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('list-petugas').innerHTML = listAdmin.map(p => `<div class="card"><strong>${p}</strong> (Admin Master)</div>`).join('');
+        document.getElementById('st-a').innerText = db_arsip.length;
+        document.getElementById('st-p').innerText = db_pesan.length;
+        lucide.createIcons();
+    }
+
+    function renderUser() {
+        document.getElementById('user-grid').innerHTML = db_arsip.map(a => `
+            <div class="doc-item">
+                <div style="font-size:2rem; margin-bottom:10px;">${a.tipe === 'PDF' ? '📄' : '🖼️'}</div>
+                <p style="font-size:0.75rem; font-weight:800;">${a.nama}</p>
+                <a href="${a.raw}" download="${a.nama}" class="btn-main" style="text-decoration:none; display:block; padding:8px; font-size:0.7rem; margin-top:10px;">Unduh</a>
+            </div>
+        `).join('');
+    }
+
+    function delArsip(id) { if(confirm('Hapus dokumen ini?')) { db_arsip = db_arsip.filter(x => x.id != id); saveDB(); renderAdmin(); } }
+    
+    function sendPesan() {
+        const t = document.getElementById('msg-input').value;
+        if(t) { db_pesan.push({ nama: currentUser || 'User Link', teks: t }); saveDB(); alert("Pesan Terkirim!"); document.getElementById('msg-input').value = ""; }
+    }
+
+    function saveDB() {
+        localStorage.setItem('arsip', JSON.stringify(db_arsip));
+        localStorage.setItem('pesan', JSON.stringify(db_pesan));
+    }
+
+    function backupData() {
+        const blob = new Blob([JSON.stringify({arsip: db_arsip, pesan: db_pesan})], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = "backup_arsipku.json"; a.click();
+    }
+
+    function resetData() { if(confirm('Hapus semua data secara permanen?')) { localStorage.clear(); location.reload(); } }
+    
+    function closeModal() { document.getElementById('modal-box').style.display = 'none'; }
+    
+    function initChart() {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, { type: 'line', data: { labels: ['M1', 'M2', 'M3', 'M4'], datasets: [{ label: 'Traffic', data: [2, 10, 5, 15], borderColor: '#2563eb', tension: 0.4 }] } });
+    }
+</script>
+</body>
+</html>
